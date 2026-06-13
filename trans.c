@@ -231,9 +231,8 @@ void trans8(int M, int N, int A[N][M], int B[M][N])
 
         for (ii = i; ii < rowEnd; ii += 4) {
           for (jj = j; jj < colEnd; jj += 4) {
-            if (jj + 3 > colEnd) {
+            if (jj + 3 < colEnd) {
               for (k = ii; k < (ii + 4 > rowEnd ? rowEnd : ii + 4); k++) {
-                for (k = ii; k < (ii + 4 > rowEnd ? rowEnd : ii + 4); k++) {
                   t0 = A[k][jj];
                   t1 = A[k][jj + 1];
                   t2 = A[k][jj + 2];
@@ -243,7 +242,6 @@ void trans8(int M, int N, int A[N][M], int B[M][N])
                   B[jj + 1][k] = t1;
                   B[jj + 2][k] = t2;
                   B[jj + 3][k] = t3;
-                }
               }
             } else {
               for (k = ii; k < (ii + 4 > rowEnd ? rowEnd : ii + 4); k++) {
@@ -254,6 +252,200 @@ void trans8(int M, int N, int A[N][M], int B[M][N])
             }
           }
         }
+      }
+    }
+}
+
+char trans9_desc[] = "8x8 blocking with swap";
+void trans9(int M, int N, int A[N][M], int B[M][N])
+{
+    int i, j, k, l;
+    int t0, t1, t2, t3, t4, t5, t6, t7;
+
+    for (i = 0; i < N; i += 8) {
+      for (j = 0; j < M; j += 8) {
+	if (i + 7 < N && j + 7 < M) {
+	  // 상단 4행 처리
+	  for (k = i; k < i + 4; k++) {
+	    // SRC의 현재 row를 한 번에 읽음(A[k][j~j+7])
+	    t0 = A[k][j];
+	    t1 = A[k][j + 1];
+	    t2 = A[k][j + 2];
+	    t3 = A[k][j + 3];
+	    t4 = A[k][j + 4];
+	    t5 = A[k][j + 5];
+	    t6 = A[k][j + 6];
+	    t7 = A[k][j + 7];
+
+	    // SRC의 A 영역 -> DST 좌상단 (최종 위치)
+	    B[j][k] = t0;
+	    B[j + 1][k] = t1;
+	    B[j + 2][k] = t2;
+	    B[j + 3][k] = t3;
+
+	    // SRC의 B 영역 -> DST 우상단 (임시 저장)
+	    B[j][k + 4] = t4;
+	    B[j + 1][k + 4] = t5;
+	    B[j + 2][k + 4] = t6;
+	    B[j + 3][k + 4] = t7;
+	  }
+
+	  // C 처리 + 임시 B swap
+	  for (l = 0; l < 4; l++) {
+	    /* DST 우상단에 임시 저장된 B 꺼내기 */
+	    t0 = B[j + l][i + 4];
+	    t1 = B[j + l][i + 5];
+	    t2 = B[j + l][i + 6];
+	    t3 = B[j + l][i + 7];
+
+ 	    // SRC의 C 영역 -> DST 우상단
+	    t4 = A[i + 4][j + l];
+	    t5 = A[i + 5][j + l];
+	    t6 = A[i + 6][j + l];
+	    t7 = A[i + 7][j + l];
+
+	    B[j + l][i + 4] = t4;
+	    B[j + l][i + 5] = t5;
+	    B[j + l][i + 6] = t6;
+	    B[j + l][i + 7] = t7;
+
+	    /* 임시 B -> DST 좌하단 */
+	    B[j + 4 + l][i]     = t0;
+	    B[j + 4 + l][i + 1] = t1;
+	    B[j + 4 + l][i + 2] = t2;
+	    B[j + 4 + l][i + 3] = t3;
+	  }
+
+	  // SRC의 D 영역 -> DST 우하단
+	  for (k = i + 4; k < i + 8; k++) {
+	    t0 = A[k][j + 4];
+	    t1 = A[k][j + 5];
+	    t2 = A[k][j + 6];
+	    t3 = A[k][j + 7];
+
+	    B[j + 4][k] = t0;
+	    B[j + 5][k] = t1;
+	    B[j + 6][k] = t2;
+	    B[j + 7][k] = t3;
+	  }
+
+	} else {
+	  for (k = i; k < (i + 8 > N ? N : i + 8); k++) {
+	    for (l = j; l < (j + 8 > M ? M : j + 8); l++) {
+	      B[l][k] = A[k][l];
+	    }
+	  }
+	}
+      }
+    }
+}
+
+char trans10_desc[] = "8x8 blocking with swap and diagonal";
+void trans10(int M, int N, int A[N][M], int B[M][N])
+{
+    int i, j, k, l;
+    int t0, t1, t2, t3, t4, t5, t6, t7;
+
+    for (i = 0; i < N; i += 8) {
+      for (j = 0; j < M; j += 8) {
+	if (i + 7 < N && j + 7 < M) {
+	  // 상단 4행 처리
+	  for (k = i; k < i + 4; k++) {
+	    // SRC의 현재 row를 한 번에 읽음(A[k][j~j+7])
+	    t0 = A[k][j];
+	    t1 = A[k][j + 1];
+	    t2 = A[k][j + 2];
+	    t3 = A[k][j + 3];
+	    t4 = A[k][j + 4];
+	    t5 = A[k][j + 5];
+	    t6 = A[k][j + 6];
+	    t7 = A[k][j + 7];
+
+	    /* SRC의 A 영역 -> DST 좌상단
+	       diagonal block이면 진짜 대각선 원소를 마지막에 씀 */
+	    if (i == j) {
+		if (k == i) {
+		    B[j + 1][k] = t1;
+		    B[j + 2][k] = t2;
+		    B[j + 3][k] = t3;
+		    B[j][k] = t0;
+		} else if (k == i + 1) {
+		    B[j][k] = t0;
+		    B[j + 2][k] = t2;
+		    B[j + 3][k] = t3;
+		    B[j + 1][k] = t1;
+		} else if (k == i + 2) {
+		    B[j][k] = t0;
+		    B[j + 1][k] = t1;
+		    B[j + 3][k] = t3;
+		    B[j + 2][k] = t2;
+		} else {
+		    B[j][k] = t0;
+		    B[j + 1][k] = t1;
+		    B[j + 2][k] = t2;
+		    B[j + 3][k] = t3;
+		}
+	    } else {
+		B[j][k] = t0;
+		B[j + 1][k] = t1;
+		B[j + 2][k] = t2;
+		B[j + 3][k] = t3;
+	    }
+
+	    // SRC의 B 영역 -> DST 우상단 (임시 저장)
+	    B[j][k + 4] = t4;
+	    B[j + 1][k + 4] = t5;
+	    B[j + 2][k + 4] = t6;
+	    B[j + 3][k + 4] = t7;
+	  }
+
+	  // C 처리 + 임시 B swap
+	  for (l = 0; l < 4; l++) {
+	    /* DST 우상단에 임시 저장된 B 꺼내기 */
+	    t0 = B[j + l][i + 4];
+	    t1 = B[j + l][i + 5];
+	    t2 = B[j + l][i + 6];
+	    t3 = B[j + l][i + 7];
+
+ 	    // SRC의 C 영역 -> DST 우상단
+	    t4 = A[i + 4][j + l];
+	    t5 = A[i + 5][j + l];
+	    t6 = A[i + 6][j + l];
+	    t7 = A[i + 7][j + l];
+
+	    B[j + l][i + 4] = t4;
+	    B[j + l][i + 5] = t5;
+	    B[j + l][i + 6] = t6;
+	    B[j + l][i + 7] = t7;
+
+	    /* 임시 B -> DST 좌하단 */
+	    B[j + 4 + l][i]     = t0;
+	    B[j + 4 + l][i + 1] = t1;
+	    B[j + 4 + l][i + 2] = t2;
+	    B[j + 4 + l][i + 3] = t3;
+	  }
+
+	  // D 처리
+	  for (k = i + 4; k < i + 8; k++) {
+	    // SRC의 D 영역 -> DST 우하단
+	    t0 = A[k][j + 4];
+	    t1 = A[k][j + 5];
+	    t2 = A[k][j + 6];
+	    t3 = A[k][j + 7];
+
+	    B[j + 4][k] = t0;
+	    B[j + 5][k] = t1;
+	    B[j + 6][k] = t2;
+	    B[j + 7][k] = t3;
+	  }
+
+	} else {
+	  for (k = i; k < (i + 8 > N ? N : i + 8); k++) {
+	    for (l = j; l < (j + 8 > M ? M : j + 8); l++) {
+	      B[l][k] = A[k][l];
+	    }
+	  }
+	}
       }
     }
 }
@@ -271,7 +463,7 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N])
   if (M == 32 && N == 32) {
     trans3(M, N, A, B);
   } else if (M == 64 && N == 64) {
-    trans7(M, N, A, B);
+    trans9(M, N, A, B);
   } else {
     trans4(M, N, A, B);
   }
@@ -299,6 +491,8 @@ void registerFunctions()
     registerTransFunction(trans6, trans6_desc);
     registerTransFunction(trans7, trans7_desc);
     registerTransFunction(trans8, trans8_desc);
+    registerTransFunction(trans9, trans9_desc);
+    registerTransFunction(trans10, trans10_desc);
 
 }
 
